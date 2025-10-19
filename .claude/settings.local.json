@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": [
+    "jotai-mcp-server"
+  ],
+  "enableAllProjectMcpServers": true
+}

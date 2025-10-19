@@ -1,0 +1,3 @@
+[submodule "jotai"]
+	path = jotai
+	url = https://github.com/pmndrs/jotai

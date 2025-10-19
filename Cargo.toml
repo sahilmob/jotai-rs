@@ -1,0 +1,19 @@
+[package]
+name = "jotai-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Learning Jotai Internals"]
+description = "A Rust implementation of Jotai's state management primitives for learning purposes"
+license = "MIT"
+
+[dependencies]
+# Core dependencies for state management
+dashmap = "6.1"           # Concurrent HashMap for thread-safe atom storage
+parking_lot = "0.12"      # Efficient synchronization primitives
+once_cell = "1.19"        # Lazy static initialization
+thiserror = "2.0"         # Error handling
+futures = "0.3"           # Async/await support
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }  # Async runtime for tests
+criterion = "0.5"         # Benchmarking
