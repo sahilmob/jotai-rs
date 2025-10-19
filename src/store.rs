@@ -395,6 +395,7 @@ mod tests {
 
     #[test]
     fn test_store_creation() {
+        // Test that Store::new initializes all maps correctly
         let store = Store::new();
         assert_eq!(store.atom_states.len(), 0);
         assert_eq!(store.mounted.len(), 0);

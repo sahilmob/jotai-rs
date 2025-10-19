@@ -35,9 +35,10 @@ static ATOM_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 ///
 /// **FP Pattern**: Side effect encapsulated in a function
 ///
-/// TODO: Phase 1.1 - Use in atom() factory
+/// TODO: Phase 1.1 - Implement atomic counter
+/// Hint: Use ATOM_ID_COUNTER.fetch_add(1, Ordering::Relaxed) to atomically increment and return the ID
 fn next_atom_id() -> AtomId {
-    ATOM_ID_COUNTER.fetch_add(1, Ordering::Relaxed)
+    todo!("Implement next_atom_id - Phase 1.1: Use fetch_add on ATOM_ID_COUNTER")
 }
 
 /// Core atom type
@@ -96,10 +97,10 @@ impl<T: Clone + Send + Sync + 'static> Atom<T> {
 
     /// Set or update the debug label (builder pattern)
     ///
-    /// TODO: Phase 1.1 - Useful for debugging
+    /// TODO: Phase 1.1 - Implement builder pattern for debug label
+    /// Hint: Set self.debug_label = Some(label.into()) and return self
     pub fn with_label(mut self, label: impl Into<String>) -> Self {
-        self.debug_label = Some(label.into());
-        self
+        todo!("Implement with_label - Phase 1.1: Set debug_label and return self for builder pattern")
     }
 
     /// Convert atom to string representation
@@ -113,11 +114,10 @@ impl<T: Clone + Send + Sync + 'static> Atom<T> {
     ///     : key
     /// }
     /// ```
+    /// TODO: Phase 1.1 - Implement string representation
+    /// Hint: If debug_label exists, format as "atom{id}:{label}", otherwise "atom{id}"
     pub fn to_string(&self) -> String {
-        match &self.debug_label {
-            Some(label) => format!("atom{}:{}", self.id, label),
-            None => format!("atom{}", self.id),
-        }
+        todo!("Implement to_string - Phase 1.1: Format as 'atomN' or 'atomN:label'")
     }
 
     /// Call the read function to compute the value
@@ -126,8 +126,9 @@ impl<T: Clone + Send + Sync + 'static> Atom<T> {
     ///
     /// TODO: Phase 1.3 - Use in store.get()
     /// TODO: Phase 1.3 - Pass proper context (Store reference) to read_fn
+    /// Hint: Simply call (self.read_fn)() to invoke the stored function
     pub(crate) fn read(&self) -> Result<T> {
-        (self.read_fn)()
+        todo!("Implement Atom::read - Phase 1.3: Call the read_fn closure")
     }
 }
 
@@ -206,15 +207,17 @@ impl<T: Clone + Send + Sync + 'static> WritableAtom<T> {
     ///
     /// TODO: Phase 1.4 - Use in store.set()
     /// TODO: Phase 1.4 - Pass proper context (Store reference) to write_fn
+    /// Hint: Call (self.write_fn)(value) to invoke the stored write function
     pub(crate) fn write(&self, value: T) -> Result<()> {
-        (self.write_fn)(value)
+        todo!("Implement WritableAtom::write - Phase 1.4: Call the write_fn closure with value")
     }
 
     /// Call the onMount callback if present
     ///
     /// TODO: Phase 8.1 - Use in store subscription mounting
+    /// Hint: Check if on_mount exists, if so call it and return the result (Option<OnUnmount>)
     pub(crate) fn on_mount(&self) -> Option<OnUnmount> {
-        self.on_mount.as_ref().and_then(|f| f())
+        todo!("Implement on_mount - Phase 8.1: Call on_mount callback if present")
     }
 }
 
@@ -272,46 +275,15 @@ pub type PrimitiveAtom<T> = WritableAtom<T>;
 /// let count = atom(0);
 /// ```
 ///
-/// TODO: Phase 1.1 - Implement
-/// TODO: Phase 1.2 - Add to Store initialization logic
+/// TODO: Phase 1.1 - Implement primitive atom factory
+/// Hint:
+/// 1. Call next_atom_id() to get a unique ID
+/// 2. Create read_fn that will read from store (for now, just todo!())
+/// 3. Create write_fn that will write to store (for now, just todo!())
+/// 4. Build and return WritableAtom with these functions
+/// Note: The actual read/write logic happens in the store, not here
 pub fn atom<T: Clone + Send + Sync + 'static>(initial_value: T) -> PrimitiveAtom<T> {
-    let id = next_atom_id();
-
-    // Create a read function that returns the stored value
-    // Reference: `jotai/src/vanilla/atom.ts:124-126` (defaultRead)
-    let read_fn: ReadFn<T> = Arc::new(move || {
-        // TODO: Phase 1.3 - Implement actual read logic
-        // This should read from the store's atom_states map
-        // The Store will need to pass itself to the read function somehow
-        // (likely by capturing the atom ID and looking it up)
-        todo!("Primitive atom read - Phase 1.3")
-    });
-
-    // Create a write function that updates the stored value
-    // Reference: `jotai/src/vanilla/atom.ts:128-140` (defaultWrite)
-    let write_fn: WriteFn<T> = Arc::new(move |_value: T| {
-        // TODO: Phase 1.4 - Implement actual write logic
-        // This should:
-        // 1. Update the value in the store
-        // 2. Increment epoch number
-        // 3. Invalidate dependents
-        // 4. Collect for notification
-        // The Store will handle this by capturing the atom ID
-        todo!("Primitive atom write - Phase 1.4")
-    });
-
-    let base_atom = Atom {
-        id,
-        read_fn,
-        debug_label: None,
-        _phantom: std::marker::PhantomData,
-    };
-
-    WritableAtom {
-        atom: base_atom,
-        write_fn,
-        on_mount: None,
-    }
+    todo!("Implement atom() factory - Phase 1.1: Generate ID, create read_fn and write_fn closures")
 }
 
 /// Create a read-only derived atom
@@ -339,19 +311,18 @@ pub fn atom<T: Clone + Send + Sync + 'static>(initial_value: T) -> PrimitiveAtom
 /// ```
 ///
 /// TODO: Phase 2.2 - Implement with dependency tracking
+/// Hint:
+/// 1. Generate a new atom ID
+/// 2. Capture the user's read function (the F parameter)
+/// 3. Create a read_fn closure that will call the user's read function with a Getter
+/// 4. Return an Atom with this read_fn
+/// Note: Dependency tracking happens when the read function calls get() on other atoms
 pub fn atom_derived<T, F>(_read: F) -> Atom<T>
 where
     T: Clone + Send + Sync + 'static,
     F: Fn(&dyn Getter) -> Result<T> + Send + Sync + 'static,
 {
-    let id = next_atom_id();
-
-    Atom {
-        id,
-        read_fn: Arc::new(|| todo!("atom_derived - Phase 2.2")),
-        debug_label: None,
-        _phantom: std::marker::PhantomData,
-    }
+    todo!("Implement atom_derived - Phase 2.2: Create derived atom with dependency tracking")
 }
 
 /// Create a writable derived atom with custom read and write logic
@@ -391,26 +362,19 @@ where
 /// ```
 ///
 /// TODO: Phase 5.1 - Implement writable derived atoms
+/// Hint:
+/// 1. Generate a new atom ID
+/// 2. Capture both the read and write functions
+/// 3. Create read_fn that calls the user's read function with Getter
+/// 4. Create write_fn that calls the user's write function with Getter and Setter
+/// 5. Return WritableAtom with both functions
 pub fn atom_writable<T, R, W>(_read: R, _write: W) -> WritableAtom<T>
 where
     T: Clone + Send + Sync + 'static,
     R: Fn(&dyn Getter) -> Result<T> + Send + Sync + 'static,
     W: Fn(&dyn Getter, &dyn Setter, T) -> Result<()> + Send + Sync + 'static,
 {
-    let id = next_atom_id();
-
-    let base_atom = Atom {
-        id,
-        read_fn: Arc::new(|| todo!("atom_writable read - Phase 5.1")),
-        debug_label: None,
-        _phantom: std::marker::PhantomData,
-    };
-
-    WritableAtom {
-        atom: base_atom,
-        write_fn: Arc::new(|_| todo!("atom_writable write - Phase 5.1")),
-        on_mount: None,
-    }
+    todo!("Implement atom_writable - Phase 5.1: Create atom with custom read and write logic")
 }
 
 /// Create a write-only atom (read returns initial value)
@@ -441,7 +405,9 @@ mod tests {
     use super::*;
 
     #[test]
+    #[should_panic(expected = "atom()")]
     fn test_atom_id_generation() {
+        // Test that each atom gets a unique, incrementing ID
         let a1 = atom(1);
         let a2 = atom(2);
         let a3 = atom(3);
@@ -452,14 +418,18 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_atom_debug_label() {
+        // Test that with_label sets the debug label correctly
         let count = atom(0).with_label("count");
         assert_eq!(count.as_atom().debug_label(), Some("count"));
         assert!(count.as_atom().to_string().contains("count"));
     }
 
     #[test]
+    #[should_panic]
     fn test_atom_to_string() {
+        // Test that to_string formats atoms correctly
         let unnamed = atom(42);
         let named = atom(42).with_label("answer");
 

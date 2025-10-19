@@ -195,6 +195,7 @@ mod tests {
 
     #[test]
     fn test_set_state_action_value() {
+        // Test that SetStateAction::Value variant works correctly
         let action: SetStateAction<i32, fn(i32) -> i32> = SetStateAction::Value(42);
         match action {
             SetStateAction::Value(v) => assert_eq!(v, 42),
@@ -204,6 +205,7 @@ mod tests {
 
     #[test]
     fn test_set_state_action_updater() {
+        // Test that SetStateAction::Updater variant works correctly
         let action: SetStateAction<i32, fn(i32) -> i32> = SetStateAction::Updater(|x| x + 1);
         match action {
             SetStateAction::Value(_) => panic!("Expected Updater"),

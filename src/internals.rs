@@ -78,26 +78,18 @@ pub struct AtomState<T: Clone> {
 impl<T: Clone> AtomState<T> {
     /// Create a new uninitialized atom state
     ///
-    /// TODO: Phase 1.2 - Use in Store initialization
+    /// TODO: Phase 1.2 - Implement state initialization
+    /// Hint: Create AtomState with empty dependencies, no pending promises, epoch 0, and None value
     pub fn new() -> Self {
-        AtomState {
-            dependencies: HashMap::new(),
-            pending_promises: HashSet::new(),
-            epoch: 0,
-            value: None,
-        }
+        todo!("Implement AtomState::new - Phase 1.2: Initialize empty state")
     }
 
     /// Create an atom state with an initial value
     ///
-    /// TODO: Phase 1.2 - Use for primitive atoms
+    /// TODO: Phase 1.2 - Implement state with initial value
+    /// Hint: Same as new() but set value to Some(Ok(value))
     pub fn with_value(value: T) -> Self {
-        AtomState {
-            dependencies: HashMap::new(),
-            pending_promises: HashSet::new(),
-            epoch: 0,
-            value: Some(Ok(value)),
-        }
+        todo!("Implement AtomState::with_value - Phase 1.2: Initialize state with given value")
     }
 
     /// Check if the cached value is fresh (dependencies haven't changed)
@@ -133,32 +125,34 @@ impl<T: Clone> AtomState<T> {
 
     /// Update the value and increment epoch
     ///
-    /// TODO: Phase 1.4 - Use in set operation
+    /// TODO: Phase 1.4 - Implement value update with epoch increment
+    /// Hint: Set self.value = Some(Ok(value)) and increment self.epoch
     pub fn set_value(&mut self, value: T) {
-        self.value = Some(Ok(value));
-        self.epoch += 1;
+        todo!("Implement set_value - Phase 1.4: Update value and increment epoch")
     }
 
     /// Update with an error
     ///
-    /// TODO: Phase 8.3 - Use for error handling
+    /// TODO: Phase 8.3 - Implement error storage with epoch increment
+    /// Hint: Set self.value = Some(Err(error)) and increment self.epoch
     pub fn set_error(&mut self, error: AtomError) {
-        self.value = Some(Err(error));
-        self.epoch += 1;
+        todo!("Implement set_error - Phase 8.3: Store error and increment epoch")
     }
 
     /// Record a dependency
     ///
-    /// TODO: Phase 2.1 - Call during atom read
+    /// TODO: Phase 2.1 - Implement dependency tracking
+    /// Hint: Insert the atom_id and epoch into self.dependencies HashMap
     pub fn add_dependency(&mut self, atom_id: AtomId, epoch: EpochNumber) {
-        self.dependencies.insert(atom_id, epoch);
+        todo!("Implement add_dependency - Phase 2.1: Insert dependency into HashMap")
     }
 
     /// Clear all dependencies (before recomputing)
     ///
-    /// TODO: Phase 2.2 - Call before calling read function
+    /// TODO: Phase 2.2 - Implement dependency clearing
+    /// Hint: Call self.dependencies.clear()
     pub fn clear_dependencies(&mut self) {
-        self.dependencies.clear();
+        todo!("Implement clear_dependencies - Phase 2.2: Clear the dependencies HashMap")
     }
 }
 
@@ -221,21 +215,18 @@ pub struct Mounted {
 impl Mounted {
     /// Create a new Mounted entry
     ///
-    /// TODO: Phase 3.2 - Use when first subscribing to an atom
+    /// TODO: Phase 3.2 - Implement Mounted initialization
+    /// Hint: Create Mounted with empty Vec for listeners, empty HashSets for deps/dependents, None cleanup
     pub fn new() -> Self {
-        Mounted {
-            listeners: Vec::new(),
-            dependencies: HashSet::new(),
-            dependents: HashSet::new(),
-            cleanup: None,
-        }
+        todo!("Implement Mounted::new - Phase 3.2: Initialize empty mounted state")
     }
 
     /// Add a listener
     ///
-    /// TODO: Phase 3.2 - Call in store.sub()
+    /// TODO: Phase 3.2 - Implement listener registration
+    /// Hint: Push the listener onto self.listeners Vec
     pub fn add_listener(&mut self, listener: Listener) {
-        self.listeners.push(listener);
+        todo!("Implement add_listener - Phase 3.2: Add listener to the Vec")
     }
 
     /// Remove a listener
@@ -251,48 +242,50 @@ impl Mounted {
 
     /// Check if there are any listeners
     ///
-    /// TODO: Phase 3.2 - Use to decide if should unmount
+    /// TODO: Phase 3.2 - Implement listener check
+    /// Hint: Return !self.listeners.is_empty()
     pub fn has_listeners(&self) -> bool {
-        !self.listeners.is_empty()
+        todo!("Implement has_listeners - Phase 3.2: Check if listeners Vec is empty")
     }
 
     /// Add a dependency
     ///
-    /// TODO: Phase 3.4 - Track for recursive mounting
+    /// TODO: Phase 3.4 - Implement dependency tracking for mounting
+    /// Hint: Insert atom_id into self.dependencies HashSet
     pub fn add_dependency(&mut self, atom_id: AtomId) {
-        self.dependencies.insert(atom_id);
+        todo!("Implement add_dependency - Phase 3.4: Insert into dependencies HashSet")
     }
 
     /// Add a dependent
     ///
-    /// TODO: Phase 2.1 - Track reverse dependencies
+    /// TODO: Phase 2.1 - Implement reverse dependency tracking
+    /// Hint: Insert atom_id into self.dependents HashSet
     pub fn add_dependent(&mut self, atom_id: AtomId) {
-        self.dependents.insert(atom_id);
+        todo!("Implement add_dependent - Phase 2.1: Insert into dependents HashSet")
     }
 
     /// Remove a dependent
     ///
-    /// TODO: Phase 3.2 - Remove when dependent unmounts
+    /// TODO: Phase 3.2 - Implement dependent removal
+    /// Hint: Call self.dependents.remove(atom_id)
     pub fn remove_dependent(&mut self, atom_id: &AtomId) {
-        self.dependents.remove(atom_id);
+        todo!("Implement remove_dependent - Phase 3.2: Remove from dependents HashSet")
     }
 
     /// Call all listeners
     ///
-    /// TODO: Phase 3.3 - Use in flush_callbacks
+    /// TODO: Phase 3.3 - Implement listener notification
+    /// Hint: Iterate over self.listeners and call each one
     pub fn notify_listeners(&self) {
-        for listener in &self.listeners {
-            listener();
-        }
+        todo!("Implement notify_listeners - Phase 3.3: Iterate and call all listeners")
     }
 
     /// Call cleanup callback if present
     ///
-    /// TODO: Phase 8.1 - Call on unmount
+    /// TODO: Phase 8.1 - Implement cleanup execution
+    /// Hint: Check if self.cleanup is Some, if so extract and call it
     pub fn cleanup(self) {
-        if let Some(cleanup) = self.cleanup {
-            cleanup();
-        }
+        todo!("Implement cleanup - Phase 8.1: Call cleanup callback if present")
     }
 }
 
@@ -403,7 +396,9 @@ mod tests {
     use super::*;
 
     #[test]
+    #[should_panic(expected = "AtomState::new")]
     fn test_atom_state_creation() {
+        // Test that AtomState::new creates proper initial state
         let state: AtomState<i32> = AtomState::new();
         assert_eq!(state.epoch, 0);
         assert!(state.value.is_none());
@@ -411,7 +406,9 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "AtomState::with_value")]
     fn test_atom_state_with_value() {
+        // Test that AtomState::with_value creates state with initial value
         let state = AtomState::with_value(42);
         assert_eq!(state.epoch, 0);
         assert!(state.value.is_some());
@@ -419,7 +416,9 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "set_value")]
     fn test_atom_state_set_value() {
+        // Test that set_value updates the value and increments epoch
         let mut state: AtomState<i32> = AtomState::new();
         state.set_value(100);
         assert_eq!(state.epoch, 1);
@@ -427,7 +426,9 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Mounted::new")]
     fn test_mounted_creation() {
+        // Test that Mounted::new creates proper initial state
         let mounted = Mounted::new();
         assert!(mounted.listeners.is_empty());
         assert!(mounted.dependencies.is_empty());
@@ -436,7 +437,9 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "add_dependency")]
     fn test_mounted_add_dependency() {
+        // Test that add_dependency properly inserts into the HashSet
         let mut mounted = Mounted::new();
         mounted.add_dependency(1);
         mounted.add_dependency(2);
