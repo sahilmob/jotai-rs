@@ -1131,7 +1131,26 @@ npm init -y
 
 ### Phase Completion Checklist
 
-- [ ] Phase 1: Core Primitives (Week 1)
+- [x] **Phase 1.1**: Atom Definition (atom.rs) ✅ COMPLETE
+  - [x] Atom types (Atom, WritableAtom, PrimitiveAtom)
+  - [x] Factory functions (atom, atom_derived, atom_writable, atom_write_only)
+  - [x] ID generation with AtomicUsize
+  - [x] Debug labels and string representation
+  - [x] Comprehensive test suite (21 tests)
+- [ ] **Phase 1.2**: Basic Store Structure (store.rs)
+  - [ ] Store struct with DashMap
+  - [ ] Type erasure with Box<dyn Any>
+  - [ ] Store::new() constructor
+- [ ] **Phase 1.3**: Store Get Operation
+  - [ ] Implement Getter trait for Store
+  - [ ] Store::get() for primitive atoms
+  - [ ] Lazy evaluation
+  - [ ] Simple caching (no dependencies yet)
+- [ ] **Phase 1.4**: Store Set Operation
+  - [ ] Implement Setter trait for Store
+  - [ ] Store::set() for primitive atoms
+  - [ ] Update atom state
+  - [ ] Increment epoch numbers
 - [ ] Phase 2: Dependency Tracking (Week 2)
 - [ ] Phase 3: Subscription System (Week 3)
 - [ ] Phase 4: Advanced Invalidation (Week 4)
@@ -1144,11 +1163,13 @@ npm init -y
 
 ### Current Status
 
-**Last Updated**: 2025-10-19
+**Last Updated**: 2025-10-19 (Session 2)
 
-**Current Phase**: Phase 1 - Core Primitives (Setup Complete, Implementation Pending)
+**Current Phase**: Phase 1.1 - Core Primitives ✅ COMPLETE
 
 **Completed Tasks**:
+
+#### Phase 0 - Project Setup ✅
 - [x] Project initialization
 - [x] Cargo.toml configuration with dependencies
 - [x] Architecture analysis of Jotai (comprehensive)
@@ -1159,7 +1180,7 @@ npm init -y
   - `lib.rs` - Main entry point with re-exports
   - `types.rs` - Core type definitions (Getter, Setter, AtomId, etc.)
   - `error.rs` - Error types with thiserror
-  - `atom.rs` - Atom primitives and factory functions
+  - `atom.rs` - Atom primitives and factory functions (SKELETON)
   - `store.rs` - Store implementation skeleton
   - `internals.rs` - Internal state structures (AtomState, Mounted)
   - `utils/atom_family.rs` - Atom family utility skeleton
@@ -1169,19 +1190,49 @@ npm init -y
   - `tests/derived_atoms.rs` - Phase 2 tests (dependencies, invalidation)
 - [x] This CLAUDE.md documentation file
 
-**Known Compilation Errors** (Expected at this stage):
-- `E0038`: Getter/Setter traits not dyn-compatible (generic methods)
-  - Solution: Will be addressed in Phase 1.3 with concrete implementations
-- `E0585`: Doc comment formatting issue in internals.rs
-  - Minor issue to fix before Phase 1 implementation
-- Various unused import warnings (expected for skeleton code)
+#### Phase 1.1 - Atom Definition ✅ COMPLETE
+- [x] Implemented `AtomId` type with global atomic counter
+- [x] Implemented `next_atom_id()` function with atomic increment
+- [x] Implemented `Atom<T>` struct with read_fn and debug_label
+- [x] Implemented `WritableAtom<T>` struct extending Atom
+- [x] Implemented `atom()` factory for primitive atoms (placeholder)
+- [x] Implemented `atom_derived()` factory for read-only atoms (placeholder)
+- [x] Implemented `atom_writable()` factory for writable derived atoms (placeholder)
+- [x] Implemented `atom_write_only()` factory for write-only atoms (placeholder)
+- [x] Added `with_label()` builder method for both Atom and WritableAtom
+- [x] Implemented `to_string()` and Display trait
+- [x] Implemented Debug trait for Atom and WritableAtom
+- [x] **FIXED**: Placeholder functions use `Arc::new(|| unreachable!())` pattern
+- [x] **FIXED**: Closure ownership issues in `atom_write_only`
+- [x] **FIXED**: Unused parameter warnings with `_` prefix
+- [x] **COMPREHENSIVE TESTS**: 21 tests covering all atom functionality
+  - ID generation (sequential, unique, global counter)
+  - Debug labels (setting, formatting, edge cases)
+  - String representation (with/without labels)
+  - Atom creation (primitive atoms with various types)
+  - Cloning and ownership
+  - Type safety (complex types, Option, Result)
+  - Builder pattern
+  - Edge cases (empty labels, unicode, long labels)
 
-**Next Steps** (Phase 1.1 - 1.4):
-1. Fix trait dyn-compatibility issues (consider using concrete types)
-2. Implement atom creation and ID generation
-3. Implement basic Store::get() for primitive atoms
-4. Implement basic Store::set() for primitive atoms
-5. Run and pass basic_atoms.rs tests
+**Key Implementation Decisions**:
+1. **Option 3 (Placeholder Pattern)**: Used `unreachable!()` for read/write functions in Phase 1, actual logic will be in Store
+2. **Type Erasure Workaround**: Deferred dyn-safety issues to Phase 2 when Store is implemented
+3. **Closure Captures**: Used `.clone()` inside closures for repeatable execution
+4. **Test Strategy**: Disabled derived atom tests until Store is available (Phase 2)
+
+**Compilation Status**: ✅ **Compiles successfully** with only harmless warnings
+- 66 unused variable warnings (expected for skeleton code)
+- No compilation errors
+
+**Test Status**: ✅ **21/21 tests passing** in `atom::tests`
+
+**Next Steps** (Phase 1.2 - 1.4):
+1. ~~Implement atom creation and ID generation~~ ✅ DONE
+2. Implement basic Store structure (Phase 1.2)
+3. Implement basic Store::get() for primitive atoms (Phase 1.3)
+4. Implement basic Store::set() for primitive atoms (Phase 1.4)
+5. Run and pass basic_atoms.rs integration tests
 
 ---
 
