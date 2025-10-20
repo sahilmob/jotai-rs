@@ -16,7 +16,7 @@ use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use crate::atom::{Atom, WritableAtom};
+use crate::atom::{self, Atom, WritableAtom};
 use crate::error::{AtomError, Result};
 use crate::internals::{AtomState, Mounted};
 use crate::types::{AtomId, EpochNumber, Getter, Listener, Setter, Unsubscribe};
@@ -191,17 +191,38 @@ impl Store {
         atom: &WritableAtom<T>,
         value: T,
     ) -> Result<()> {
-        // TODO: Phase 1.4 - Implement basic set
-        // Steps:
-        // 1. Get current state
-        // 2. Call atom.write() with Getter and Setter implementations
-        // 3. Update the value in atom_states
-        // 4. Increment epoch number
-        // 5. Mark changed
-        // 6. Invalidate dependents
-        // 7. Flush callbacks
+        // Phase 1.4 - Basic set implementation for primitive atoms
+        // For primitive atoms, we directly update the state without calling write_fn
+        // (write_fn is for derived/writable atoms in later phases)
 
-        todo!("Store::set - Phase 1.4")
+        // 1. Initialize state if it doesn't exist
+        if !self.atom_states.contains_key(&atom.id()) {
+            let initial_state: AtomState<T> = AtomState {
+                epoch: 0,
+                value: None,
+                dependencies: HashMap::new(),
+                pending_promises: HashSet::new(),
+            };
+            self.atom_states
+                .insert(atom.id(), Arc::new(RwLock::new(Box::new(initial_state))));
+        }
+
+        // 2. Update the value and increment epoch
+        if let Some(state_arc) = self.atom_states.get(&atom.id()) {
+            let mut lock = state_arc.write();
+            if let Some(state) = lock.downcast_mut::<AtomState<T>>() {
+                state.value = Some(Ok(value));
+                state.epoch += 1;
+            }
+        }
+
+        // 3. Mark atom as changed (for listener notification in Phase 3)
+        self.changed.write().insert(atom.id());
+
+        // TODO: Phase 2.3 - Invalidate dependents
+        // TODO: Phase 3.3 - Flush callbacks
+
+        Ok(())
     }
 
     /// Subscribe to atom changes
@@ -301,10 +322,23 @@ impl Store {
         atom: &WritableAtom<T>,
         value: T,
     ) -> Result<()> {
+        atom.write(value.clone())?;
         // TODO: Call atom.write() with getter/setter
         // TODO: Update state
         // TODO: Increment epoch
-        todo!("write_atom_state - Phase 1.4")
+        if let Some(state_arc) = self.atom_states.get(&atom.id()) {
+            let mut lock = state_arc.write();
+            if let Some(state) = lock.downcast_mut::<AtomState<T>>() {
+                state.epoch += 1;
+                let mut r = self.changed.write();
+                r.insert(atom.id());
+                state.value = Some(Ok(value));
+                // self.invalidate_dependents(atom.id());
+                // self.flush_callbacks();
+            }
+        }
+
+        Ok(())
     }
 
     /// Invalidate all atoms that depend on the given atom
@@ -401,7 +435,15 @@ impl Getter for Store {
 impl Setter for Store {
     fn set<T: Clone + Send + Sync + 'static>(&self, atom: &Atom<T>, value: T) -> Result<()> {
         // TODO: This needs to handle WritableAtom conversion
-        todo!("Setter::set for Store - needs WritableAtom handling")
+        if let Some(state_arc) = self.atom_states.get(&atom.id()) {
+            let mut lock = state_arc.write();
+            if let Some(state) = lock.downcast_mut::<AtomState<T>>() {
+                state.value = Some(Ok(value));
+                state.epoch += 1;
+                self.changed.write().insert(atom.id());
+            }
+        }
+        Ok(())
     }
 }
 

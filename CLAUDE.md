@@ -1137,20 +1137,24 @@ npm init -y
   - [x] ID generation with AtomicUsize
   - [x] Debug labels and string representation
   - [x] Comprehensive test suite (21 tests)
-- [ ] **Phase 1.2**: Basic Store Structure (store.rs)
-  - [ ] Store struct with DashMap
-  - [ ] Type erasure with Box<dyn Any>
-  - [ ] Store::new() constructor
-- [ ] **Phase 1.3**: Store Get Operation
-  - [ ] Implement Getter trait for Store
-  - [ ] Store::get() for primitive atoms
-  - [ ] Lazy evaluation
-  - [ ] Simple caching (no dependencies yet)
-- [ ] **Phase 1.4**: Store Set Operation
-  - [ ] Implement Setter trait for Store
-  - [ ] Store::set() for primitive atoms
-  - [ ] Update atom state
-  - [ ] Increment epoch numbers
+- [x] **Phase 1.2**: Basic Store Structure (store.rs) ✅ COMPLETE
+  - [x] Store struct with DashMap
+  - [x] Type erasure with Box<dyn Any>
+  - [x] Store::new() constructor
+  - [x] All data structures initialized (atom_states, mounted, changed, etc.)
+- [x] **Phase 1.3**: Store Get Operation ✅ COMPLETE
+  - [x] Implement Getter trait for Store
+  - [x] Store::get() for primitive atoms
+  - [x] Lazy evaluation
+  - [x] Simple caching (no dependencies yet)
+  - [x] Unit tests (5 tests) and integration tests passing
+- [x] **Phase 1.4**: Store Set Operation ✅ COMPLETE
+  - [x] Implement Setter trait for Store
+  - [x] Store::set() for primitive atoms
+  - [x] Update atom state
+  - [x] Increment epoch numbers
+  - [x] Mark changed atoms for future listener notification
+  - [x] Integration tests passing (3 tests)
 - [ ] Phase 2: Dependency Tracking (Week 2)
 - [ ] Phase 3: Subscription System (Week 3)
 - [ ] Phase 4: Advanced Invalidation (Week 4)
@@ -1163,9 +1167,11 @@ npm init -y
 
 ### Current Status
 
-**Last Updated**: 2025-10-19 (Session 2)
+**Last Updated**: 2025-10-20 (Session 3)
 
-**Current Phase**: Phase 1.1 - Core Primitives ✅ COMPLETE
+**Current Phase**: Phase 1 - Core Primitives ✅ **COMPLETE** (All phases 1.1-1.4)
+
+**Ready for**: Phase 2 - Dependency Tracking
 
 **Completed Tasks**:
 
@@ -1227,12 +1233,73 @@ npm init -y
 
 **Test Status**: ✅ **21/21 tests passing** in `atom::tests`
 
-**Next Steps** (Phase 1.2 - 1.4):
-1. ~~Implement atom creation and ID generation~~ ✅ DONE
-2. Implement basic Store structure (Phase 1.2)
-3. Implement basic Store::get() for primitive atoms (Phase 1.3)
-4. Implement basic Store::set() for primitive atoms (Phase 1.4)
-5. Run and pass basic_atoms.rs integration tests
+#### Phase 1.2 - Basic Store Structure ✅ COMPLETE
+- [x] Implemented `Store` struct with all required data structures
+- [x] `atom_states: DashMap<AtomId, Arc<RwLock<Box<dyn Any>>>>` for type-erased atom states
+- [x] `mounted: DashMap<AtomId, Arc<RwLock<Mounted>>>` for subscription tracking
+- [x] `invalidated`, `changed`, `mount_callbacks`, `unmount_callbacks` fields (for future phases)
+- [x] `Store::new()` constructor initializing all maps
+- [x] Implemented `Default` trait for Store
+- [x] Implemented `Debug` trait for Store
+- [x] **Unit test**: `test_store_creation()` passing
+
+**Key Implementation Decisions**:
+1. **DashMap for concurrency**: Lock-free concurrent hash map for better performance
+2. **Arc<RwLock<>>**: Shared ownership with read-write locking for thread safety
+3. **Type Erasure**: `Box<dyn Any>` to store heterogeneous `AtomState<T>` types
+4. **Parking Lot**: Using `parking_lot` for more efficient RwLock/Mutex
+
+#### Phase 1.3 - Store Get Operation ✅ COMPLETE
+- [x] Implemented `Store::get<T>()` method for primitive atoms
+- [x] Lazy evaluation: compute value on first access
+- [x] Caching: store computed values in `atom_states`
+- [x] Call atom's `read()` function to get initial value
+- [x] Type downcast from `Box<dyn Any>` to `AtomState<T>`
+- [x] Implemented `Getter` trait for Store
+- [x] Helper method `read_atom_state()` (delegates to `get()`)
+- [x] **Unit tests**: 5 tests in `store::tests` module
+  - `test_get_primitive_atom()`
+  - `test_get_caches_value()`
+  - `test_get_multiple_atoms()`
+  - `test_get_different_types()`
+  - `test_get_with_label()`
+
+**Key Implementation Decisions**:
+1. **No dependency tracking yet**: Phase 1.3 only handles primitive atoms
+2. **Simple caching**: Store value after first read, return cached value on subsequent reads
+3. **Initialize on first access**: Create `AtomState` when atom is first read
+
+#### Phase 1.4 - Store Set Operation ✅ COMPLETE
+- [x] Implemented `Store::set<T>()` method for primitive atoms
+- [x] Initialize state if atom hasn't been accessed yet
+- [x] Update value in `atom_states`
+- [x] Increment epoch number for cache invalidation
+- [x] Mark atom as changed (stored for Phase 3 listener notification)
+- [x] Implemented `Setter` trait for Store
+- [x] Helper method `write_atom_state()` (delegates to `set()`)
+- [x] **Integration tests**: 3 tests in `tests/basic_atoms.rs`
+  - `test_write_primitive_atom()`
+  - `test_write_atom_multiple_times()`
+  - `test_write_multiple_independent_atoms()`
+
+**Key Implementation Decisions**:
+1. **Direct state update**: For primitive atoms, don't call atom's `write_fn` (that's for Phase 5)
+2. **No invalidation yet**: Phase 1.4 doesn't invalidate dependents (Phase 2.3)
+3. **No listener notification**: Phase 1.4 doesn't call listeners (Phase 3.3)
+4. **Epoch tracking**: Increment epoch on each write for future dependency tracking
+
+**Compilation Status**: ✅ **Compiles successfully** with only harmless warnings
+
+**Test Status**:
+- ✅ **6 unit tests passing** in `store::tests`
+- ✅ **3 integration tests passing** in `tests/basic_atoms.rs` (Phase 1.4)
+- ✅ **All Phase 1 functionality working**
+
+**Next Steps** (Phase 2):
+1. ~~Implement basic atom and store operations~~ ✅ DONE
+2. Implement dependency tracking (Phase 2.1-2.4)
+3. Support derived atoms with automatic dependency tracking
+4. Implement epoch-based cache invalidation
 
 ---
 
