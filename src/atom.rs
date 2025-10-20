@@ -297,10 +297,11 @@ pub type PrimitiveAtom<T> = WritableAtom<T>;
 /// 3. Create write_fn that will write to store (for now, just todo!())
 /// 4. Build and return WritableAtom with these functions
 /// Note: The actual read/write logic happens in the store, not here
-pub fn atom<T: Clone + Send + Sync + 'static>(_initial_value: T) -> PrimitiveAtom<T> {
+pub fn atom<T: Clone + Send + Sync + 'static>(initial_value: T) -> PrimitiveAtom<T> {
     // For primitive atoms, the store handles read/write directly
     // These functions should never be called
-    let read_fn = Arc::new(|| unreachable!("Primitive atom read handled by store"));
+    let initial_value = initial_value.clone();
+    let read_fn = Arc::new(move || Ok(initial_value.clone()));
     let write_fn = Arc::new(|_| unreachable!("Primitive atom write handled by store"));
 
     PrimitiveAtom {
@@ -633,7 +634,10 @@ mod tests {
 
         // Both should have the same ID (they're the same atom)
         assert_eq!(original.id(), cloned.id());
-        assert_eq!(original.as_atom().debug_label(), cloned.as_atom().debug_label());
+        assert_eq!(
+            original.as_atom().debug_label(),
+            cloned.as_atom().debug_label()
+        );
     }
 
     // TODO: Phase 2.2 - Re-enable when Store is implemented
@@ -673,7 +677,8 @@ mod tests {
         let user_atom = atom(User {
             name: "Alice".to_string(),
             age: 30,
-        }).with_label("currentUser");
+        })
+        .with_label("currentUser");
 
         assert_eq!(user_atom.as_atom().debug_label(), Some("currentUser"));
     }
@@ -691,7 +696,9 @@ mod tests {
     fn test_atom_with_result() {
         // Test atoms with Result types
         let ok_atom = atom::<Result<i32>>(Ok(42));
-        let err_atom = atom::<Result<i32>>(Err(crate::error::AtomError::Generic("test error".to_string())));
+        let err_atom = atom::<Result<i32>>(Err(crate::error::AtomError::Generic(
+            "test error".to_string(),
+        )));
 
         assert_ne!(ok_atom.id(), err_atom.id());
     }

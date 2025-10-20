@@ -10,16 +10,16 @@
 //! - Higher-order functions: subscribe returns unsubscribe function
 //! - Monadic patterns: Getter/Setter provide controlled state access
 
-use std::sync::Arc;
 use dashmap::DashMap;
 use parking_lot::{Mutex, RwLock};
-use std::collections::{HashMap, HashSet};
 use std::any::Any;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use crate::atom::{Atom, WritableAtom};
-use crate::types::{AtomId, EpochNumber, Getter, Setter, Listener, Unsubscribe};
 use crate::error::{AtomError, Result};
 use crate::internals::{AtomState, Mounted};
+use crate::types::{AtomId, EpochNumber, Getter, Listener, Setter, Unsubscribe};
 
 /// The Store manages all atom state and coordinates updates
 ///
@@ -137,8 +137,26 @@ impl Store {
         // 4. If not, call atom.read() with a Getter implementation
         // 5. Store the result in atom_states
         // 6. Return the value
+        if let Some(state_arc) = self.atom_states.get(&atom.id) {
+            let lock = state_arc.read();
+            if let Some(atom_state) = lock.downcast_ref::<AtomState<T>>() {
+                if let Some(ref result) = atom_state.value {
+                    return result.clone();
+                }
+            }
+        }
 
-        todo!("Store::get - Phase 1.3")
+        let v = atom.read()?;
+        self.atom_states.insert(
+            atom.id,
+            Arc::new(RwLock::new(Box::new(AtomState {
+                epoch: 1,
+                value: Some(Ok(v.clone())),
+                dependencies: HashMap::new(),
+                pending_promises: HashSet::new(),
+            }))),
+        );
+        Ok(v)
     }
 
     /// Update an atom's value
@@ -214,7 +232,11 @@ impl Store {
     /// TODO: Phase 3.2 - Implement subscription system
     /// TODO: Phase 3.4 - Implement recursive mounting
     /// TODO: Phase 8.1 - Call onMount lifecycle
-    pub fn sub<F>(&self, atom: &Atom<impl Clone + Send + Sync + 'static>, listener: F) -> Unsubscribe
+    pub fn sub<F>(
+        &self,
+        atom: &Atom<impl Clone + Send + Sync + 'static>,
+        listener: F,
+    ) -> Unsubscribe
     where
         F: Fn() + Send + Sync + 'static,
     {
@@ -242,7 +264,14 @@ impl Store {
     ) -> Result<()> {
         // TODO: Create AtomState if it doesn't exist
         // Call unstable_onInit if present
-        todo!("ensure_atom_state - Phase 1.3")
+        let atom_state = AtomState {
+            epoch: 1,
+            value: Some(atom.read()),
+            dependencies: HashMap::new(),
+            pending_promises: HashSet::new(),
+        };
+
+        Ok(())
     }
 
     /// Read atom state, computing if necessary
@@ -259,11 +288,7 @@ impl Store {
         &self,
         atom: &Atom<T>,
     ) -> Result<T> {
-        // TODO: Check if cached value is fresh
-        // TODO: If fresh, return cached
-        // TODO: Otherwise, call atom.read() with dependency tracking
-        // TODO: Update cache
-        todo!("read_atom_state - Phase 1.3")
+        self.get(atom)
     }
 
     /// Write atom state
@@ -401,7 +426,85 @@ mod tests {
         assert_eq!(store.mounted.len(), 0);
     }
 
-    // TODO: Phase 1.3 - Add tests for get operation
+    // ============================================================================
+    // PHASE 1.3: Store::get() Tests
+    // ============================================================================
+
+    #[test]
+    fn test_get_primitive_atom() {
+        use crate::atom::atom;
+
+        let store = Store::new();
+        let count = atom(42);
+
+        // First read should compute and cache the value
+        let value = store.get(&count.as_atom()).expect("Should read atom");
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn test_get_caches_value() {
+        use crate::atom::atom;
+
+        let store = Store::new();
+        let count = atom(100);
+
+        // First read
+        let v1 = store.get(&count.as_atom()).unwrap();
+
+        // Second read should return cached value
+        let v2 = store.get(&count.as_atom()).unwrap();
+
+        assert_eq!(v1, v2);
+        assert_eq!(v1, 100);
+
+        // Verify the atom is now in atom_states
+        assert_eq!(store.atom_states.len(), 1);
+    }
+
+    #[test]
+    fn test_get_multiple_atoms() {
+        use crate::atom::atom;
+
+        let store = Store::new();
+        let a = atom(1);
+        let b = atom(2);
+        let c = atom(3);
+
+        assert_eq!(store.get(&a.as_atom()).unwrap(), 1);
+        assert_eq!(store.get(&b.as_atom()).unwrap(), 2);
+        assert_eq!(store.get(&c.as_atom()).unwrap(), 3);
+
+        // All three atoms should be cached
+        assert_eq!(store.atom_states.len(), 3);
+    }
+
+    #[test]
+    fn test_get_different_types() {
+        use crate::atom::atom;
+
+        let store = Store::new();
+        let num = atom(42);
+        let text = atom("hello".to_string());
+        let flag = atom(true);
+
+        assert_eq!(store.get(&num.as_atom()).unwrap(), 42);
+        assert_eq!(store.get(&text.as_atom()).unwrap(), "hello");
+        assert_eq!(store.get(&flag.as_atom()).unwrap(), true);
+    }
+
+    #[test]
+    fn test_get_with_label() {
+        use crate::atom::atom;
+
+        let store = Store::new();
+        let count = atom(5).with_label("counter");
+
+        let value = store.get(&count.as_atom()).unwrap();
+        assert_eq!(value, 5);
+        assert_eq!(count.as_atom().debug_label(), Some("counter"));
+    }
+
     // TODO: Phase 1.4 - Add tests for set operation
     // TODO: Phase 3.2 - Add tests for subscribe operation
     // TODO: Phase 2.3 - Add tests for invalidation
